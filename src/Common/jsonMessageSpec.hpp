@@ -62,7 +62,7 @@ struct StateMessage_t
   int camWidth = 1024;
   int camHeight = 768;
   float camFOV = 70.0f;
-  double camDepthScale = 0.05; // 5cm resolution
+  double camDepthScale = 0.02; // 0.xx corresponds to xx cm resolution
   
   // CTAA AntiAliasing Settings
   float temporalJitterScale = 0.475f; // [0.0, 0.5] default 0.475  

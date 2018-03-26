@@ -179,6 +179,13 @@ unity_incoming::RenderOutput_t FlightGogglesClient::handleImageResponse()
         cv::Mat new_image = cv::Mat(renderMetadata.camHeight, renderMetadata.camWidth, CV_MAKETYPE(CV_8U, renderMetadata.channels[i]));
         memcpy(new_image.data, _castedInputBuffer.data(), imageLen);
 
+
+        // FlightGoggles outputs RGB, but OpenCV expects BGR.
+        // So, tell OpenCv that the input is RGB.
+        if (renderMetadata.channels[i]==3){
+            cv::cvtColor(new_image, new_image, CV_RGB2BGR);
+        }
+
         // debug
         // cv::imshow("Debug", new_image);
 
