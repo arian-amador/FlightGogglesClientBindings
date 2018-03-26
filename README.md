@@ -25,17 +25,29 @@ cmake ../ && make
 │   └─── bin            # Client executables will be placed here. 
 │
 ├── CMakeLists.txt      # Top level compilation flags. Enable ROS
-│                       # binding compilation here.
+│                       # > binding compilation here.
+├── README.md
+├── launch              # ROS launch files
+│   └── flightGogglesClient.launch
+├── package.xml         # ROS package.xml
 ├── README.md
 └── src
-    ├── CMakeLists.txt  
-    ├── Common          # Low level client code for FlightGoggles
-    │
-    ├── GeneralClient   # A simple example client that publishes 
-    │                   # and subscribes to FlightGoggles images
-    │                   # using OpenCV bindings.
-    │
-    └── ROSClient       # ROSified extension of the base FlightGoggles
-                        # client. Not compiled by default. Edit 
-                        # CMakeLists.txt to enable.
+    ├── CMakeLists.txt
+    ├── Common                      # Low level client code for FlightGoggles
+    │   ├── CMakeLists.txt
+    │   ├── FlightGogglesClient.cpp # Main client library.
+    │   ├── FlightGogglesClient.hpp
+    │   ├── json.hpp                # External json parsing library.
+    │   ├── jsonMessageSpec.hpp     # FlightGoggles message API spec. Check here 
+    │   │                           # > to see what settings are available. 
+    │   └── transforms.hpp          # Handles transformations from ROS-like coordinates
+    │                               # > to Unity3D coordinates.
+    ├── GeneralClient               # A simple example client that publishes 
+    │   ├── CMakeLists.txt          # > and subscribes to FlightGoggles images
+    │   ├── GeneralClient.cpp       # > using OpenCV bindings.
+    │   └── GeneralClient.hpp
+    └── ROSClient                   # Beta ROS-aware extension of the base FlightGoggles client
+        ├── CMakeLists.txt          # > that subscribes to poses and outputs images over ROS.
+        ├── ROSClient.cpp           # > NOT compiled by default. Edit CMakeLists.txt to enable.
+        └── ROSClient.hpp
 ```
