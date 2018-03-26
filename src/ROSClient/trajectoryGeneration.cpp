@@ -1,5 +1,5 @@
 /**
- * @file  trajectory_generation.cpp
+ * @file  trajectoryGeneration.cpp
  * @author Muyuan Lin
  * @brief  Publish simulated pose and velocity of vechicles.
  *

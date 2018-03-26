@@ -6,7 +6,7 @@
 	</node>
 
 	<!-- Generate synthetic images -->
-	<node pkg="flightGogglesClient" name="image" type="syntheticImagesPublisher">
+	<node pkg="flightGogglesClient" name="flightGogglesClient" type="ROSClient">
 	</node>
 
 </launch>
