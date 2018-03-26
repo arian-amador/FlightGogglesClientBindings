@@ -17,73 +17,7 @@
 GeneralClient::GeneralClient(){
 }
 
-void GeneralClient::populateRenderSettings(){
-  // Scene/Render settings
-  state.maxFramerate = 60; 
-  state.sceneIsInternal = true;
-  state.sceneFilename = "Butterfly_World";
-  state.compressImage = false; // Deprecated. Will be removed in the future.
-  
-  // Frame Metadata
-  state.camWidth = 1024;
-  state.camHeight = 768;
-  state.camFOV = 70.0f;
-  state.camDepthScale = 0.05; // 5cm resolution
-  
-  // CTAA AntiAliasing Settings
-  state.temporalJitterScale = 0.475f; // [0.0, 0.5] default 0.475  
-  state.temporalStability = 8; // int [3,16] default 8            
-  state.hdrResponse = 0.001f; // [0.001, 1.0] default 0.001        
-  state.sharpness = 9.5f; // [0.0, 10.0] default 9.5               
-  state.adaptiveEnhance = 0.32f; // [0.2, 0.5] default 0.32        
-  state.microShimmerReduction = 3.0f; // [0.01, 10.0] default 3.0  
-  state.staticStabilityPower = 0.5f; // [0.0, 1.0] default 0.5     
-                                
-  // Prepopulate metadata of cameras
-  unity_outgoing::Camera_t cam_RGB;
-  cam_RGB.ID = "Camera_RGB";
-  cam_RGB.channels = 3;
-  cam_RGB.isDepth = false;
-  cam_RGB.outputIndex = 0;
 
-  unity_outgoing::Camera_t cam_D;
-  cam_D.ID = "Camera_D";
-  cam_D.channels = 1;
-  cam_D.isDepth = true;
-  cam_D.outputIndex = 1;
-
-  // Add cameras to persistent state
-  state.cameras.push_back(cam_RGB);
-  state.cameras.push_back(cam_D);
-  
-}
-
-void GeneralClient::setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index) {
-  // To transforms
-  Transform3 NED_pose = convertROSToNEDCoordinates(ros_pose);
-  Transform3 unity_pose = convertNEDGlobalPoseToGlobalUnityCoordinates(NED_pose);
-
-  // Extract position and rotation
-  std::vector<double> position = {
-    unity_pose.translation()[0],
-    unity_pose.translation()[1],
-    unity_pose.translation()[2],
-  };
-
-  Eigen::Matrix3d rotationMatrix = unity_pose.rotation();
-  Quaternionx quat(rotationMatrix);
-
-  std::vector<double> rotation = {
-    quat.x(),
-    quat.y(),
-    quat.z(),
-    quat.w(),
-  };
-
-  // Set camera position and rotation
-  state.cameras[cam_index].position = position;
-  state.cameras[cam_index].rotation = rotation;
-}
 
 ////////////////////////////////////
 // Example consumers and publishers
@@ -107,11 +41,11 @@ void posePublisher(GeneralClient *self){
   // Sends render requests to FlightGoggles indefinitely
   while (true){
     // Update timestamp of state message (needed to force FlightGoggles to rerender scene)
-    self->state.utime = self->flightGoggles.getTimestamp();
+    self->flightGoggles.state.utime = self->flightGoggles.getTimestamp();
     // request render
-    self->flightGoggles.requestRender(self->state);
+    self->flightGoggles.requestRender();
     // Throttle requests to framerate.
-    usleep(1e6/self->state.maxFramerate);
+    usleep(1e6/self->flightGoggles.state.maxFramerate);
     }
 }
 
@@ -123,8 +57,7 @@ int main() {
   // Create client
   GeneralClient generalClient;
 
-  // Load params
-  generalClient.populateRenderSettings();
+  // Set some parameters.
 
   // Prepopulate FlightGoggles state with camera pose
   Transform3 camera_pose;
@@ -133,8 +66,8 @@ int main() {
   camera_pose.linear() = Eigen::AngleAxisd(M_PI/4.0f, Eigen::Vector3d(0,0,0)).toRotationMatrix();
 
   // Populate status message with new pose
-  generalClient.setCameraPoseUsingROSCoordinates(camera_pose, 0);
-  generalClient.setCameraPoseUsingROSCoordinates(camera_pose, 1);
+  generalClient.flightGoggles.setCameraPoseUsingROSCoordinates(camera_pose, 0);
+  generalClient.flightGoggles.setCameraPoseUsingROSCoordinates(camera_pose, 1);
 
   // Fork sample render request thread
   std::thread posePublisherThread(posePublisher, &generalClient);

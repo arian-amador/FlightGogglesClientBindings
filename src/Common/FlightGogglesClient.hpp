@@ -24,9 +24,20 @@ using json = nlohmann::json;
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+// For converting ROS/LCM coordinates to Unity coordinates
+#include "transforms.hpp"
+
 class FlightGogglesClient
 {
   public:
+
+    //////////////////
+    // VARIABLES
+    //////////////////
+
+    // Base status object (which holds camera settings, env settings, etc)
+    unity_outgoing::StateMessage_t state;
+
     // ZMQ connection parameters
     std::string client_address = "tcp://*";
     std::string upload_port = "10253";
@@ -51,18 +62,30 @@ class FlightGogglesClient
     int64_t u_packet_latency = 0;
     int64_t num_frames = 0;
 
+    ////////////////////////////////
+    // FLIGHTGOGGLES SETUP FUNCTIONS
+    ////////////////////////////////
+
     // Constructor.
     FlightGogglesClient();
 
     // Connects to FlightGoggles.
     void initializeConnections();
 
-    // OUTPUT
+    
+    //////////////////////////////////
+    // FLIGHTGOGGLES OUTPUT FUNCTIONS
+    //////////////////////////////////
+
+    // Set camera pose using ROS coordinates.
+    void setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index);
 
     // Send render request to Unity
-    bool requestRender(unity_outgoing::StateMessage_t requested_state);
+    bool requestRender();
 
-    // INCOMING
+    ///////////////////////////////////////////
+    // FLIGHTGOGGLES INCOMING MESSAGE HANDLERS
+    ///////////////////////////////////////////
 
     // Ensure that input buffer can handle the incoming message.
     inline void ensureBufferIsAllocated(unity_incoming::RenderMetadata_t renderMetadata){
@@ -75,9 +98,13 @@ class FlightGogglesClient
         }
     };
 
+    // Blocking call. Returns rendered images and render metadata whenever 
+    // it becomes available.
     unity_incoming::RenderOutput_t handleImageResponse();
 
+    ///////////////////
     // HELPER FUNCTIONS
+    ///////////////////
     static inline int64_t getTimestamp(){
         int64_t time = std::chrono::high_resolution_clock::now().time_since_epoch() /
                     std::chrono::microseconds(1);

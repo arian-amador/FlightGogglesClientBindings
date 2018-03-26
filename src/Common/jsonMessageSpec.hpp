@@ -45,25 +45,34 @@ struct Window_t
 
 struct StateMessage_t
 {
-  // Constant values for startup
-  int maxFramerate;
-  bool sceneIsInternal;
-  std::string sceneFilename;
-  bool compressImage;
-  // CTAA settings
-  float temporalJitterScale;
-  int temporalStability;
-  float hdrResponse;
-  float sharpness;
-  float adaptiveEnhance;
-  float microShimmerReduction;
-  float staticStabilityPower;
+  // Scene/Render settings
+  int maxFramerate = 60; 
+  bool sceneIsInternal = true;
+  // Scene choices in v1.4.1
+  std::string sceneFilename = "Hazelwood_Loft_Full_Night";
+  // std::string sceneFilename = "Hazelwood_Loft_Full_Day";
+  // std::string sceneFilename = "Butterfly_World";
+  // std::string sceneFilename = "FPS_Warehouse_Day";
+  // std::string sceneFilename = "FPS_Warehouse_Night";
+
+  bool compressImage = false; // Deprecated. Will be removed in the future.
+  
   // Frame Metadata
   int64_t utime;
-  int camWidth;
-  int camHeight;
-  float camFOV;
-  double camDepthScale;
+  int camWidth = 1024;
+  int camHeight = 768;
+  float camFOV = 70.0f;
+  double camDepthScale = 0.05; // 5cm resolution
+  
+  // CTAA AntiAliasing Settings
+  float temporalJitterScale = 0.475f; // [0.0, 0.5] default 0.475  
+  int temporalStability = 8; // int [3,16] default 8            
+  float hdrResponse = 0.001f; // [0.001, 1.0] default 0.001        
+  float sharpness = 9.5f; // [0.0, 10.0] default 9.5               
+  float adaptiveEnhance = 0.32f; // [0.2, 0.5] default 0.32        
+  float microShimmerReduction = 3.0f; // [0.01, 10.0] default 3.0  
+  float staticStabilityPower = 0.5f; // [0.0, 1.0] default 0.5     
+  
   // Object state update
   std::vector<Camera_t> cameras;
   std::vector<Window_t> windows;
@@ -75,7 +84,7 @@ struct StateMessage_t
 inline void to_json(json &j, const StateMessage_t &o)
 {
   j = json{// Initializers
-           {"maxFramerate", o.maxFramerate},
+           {"maxFramerate", 1e3}, // FG should always try to go fast. Is throttled by client side pose requests.
            {"sceneIsInternal", o.sceneIsInternal},
            {"sceneFilename", o.sceneFilename},
            {"compressImage", o.compressImage},

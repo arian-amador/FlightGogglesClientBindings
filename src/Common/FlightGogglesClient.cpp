@@ -19,14 +19,40 @@ FlightGogglesClient::FlightGogglesClient()
 void FlightGogglesClient::initializeConnections()
 {
     std::cout << "Initializing ZMQ connections..." << std::endl;
-    // // initialize the ZMQ socket context
-    // context = new zmqpp::context();
     // create and bind a upload_socket
     upload_socket.bind(client_address + ":" + upload_port);
     // create and bind a download_socket
     download_socket.bind(client_address + ":" + download_port);
     download_socket.subscribe("");
     std::cout << "Done!" << std::endl;
+}
+
+
+void FlightGogglesClient::setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index) {
+  // To transforms
+  Transform3 NED_pose = convertROSToNEDCoordinates(ros_pose);
+  Transform3 unity_pose = convertNEDGlobalPoseToGlobalUnityCoordinates(NED_pose);
+
+  // Extract position and rotation
+  std::vector<double> position = {
+    unity_pose.translation()[0],
+    unity_pose.translation()[1],
+    unity_pose.translation()[2],
+  };
+
+  Eigen::Matrix3d rotationMatrix = unity_pose.rotation();
+  Quaternionx quat(rotationMatrix);
+
+  std::vector<double> rotation = {
+    quat.x(),
+    quat.y(),
+    quat.z(),
+    quat.w(),
+  };
+
+  // Set camera position and rotation
+  state.cameras[cam_index].position = position;
+  state.cameras[cam_index].rotation = rotation;
 }
 
 
@@ -39,26 +65,26 @@ void FlightGogglesClient::initializeConnections()
  * If the pose is good, asks Unity to render another frame by sending a ZMQ
  * message.
 */
-bool FlightGogglesClient::requestRender(unity_outgoing::StateMessage_t requested_state)
+bool FlightGogglesClient::requestRender()
 {
     // Make sure that we have a pose that is newer than the last rendered pose.
-    if (!(requested_state.utime > last_uploaded_utime))
+    if (!(state.utime > last_uploaded_utime))
     {
         // Skip this render frame.
         return false;
     }
 
     // Limit Unity framerate by throttling requests
-    if (requested_state.utime < (last_uploaded_utime + (1e6)/requested_state.maxFramerate)) {
+    if (state.utime < (last_uploaded_utime + (1e6)/state.maxFramerate)) {
       // Skip this render frame.
       return false;
     }
 
     // Tell unity to always try its hardest to render as fast as it can.
-    requested_state.maxFramerate = 1e3;
+    state.maxFramerate = 1e3;
 
     // Debug
-    // std::cout << "Frame " << std::to_string(requested_state.utime) << std::endl;
+    // std::cout << "Frame " << std::to_string(state.utime) << std::endl;
 
     // Create new message object
     zmqpp::message msg;
@@ -66,14 +92,14 @@ bool FlightGogglesClient::requestRender(unity_outgoing::StateMessage_t requested
     msg << "Pose";
 
     // Update timestamp
-    last_uploaded_utime = requested_state.utime;
+    last_uploaded_utime = state.utime;
 
     // Create JSON object for status update & append to message.
-    json json_msg = requested_state;
+    json json_msg = state;
     msg << json_msg.dump();
 
     // Output debug messages at 1hz
-    if (requested_state.utime > last_upload_debug_utime + 1e6)
+    if (state.utime > last_upload_debug_utime + 1e6)
     {
         std::cout << "Last message sent: \"";
         std::cout << msg.get<std::string>(0) << std::endl;
@@ -81,7 +107,7 @@ bool FlightGogglesClient::requestRender(unity_outgoing::StateMessage_t requested
         std::cout << json_msg.dump(4) << std::endl;
         std::cout << "===================" << std::endl;
         // reset time of last debug message
-        last_upload_debug_utime = requested_state.utime;
+        last_upload_debug_utime = state.utime;
     }
     // Send message without blocking.
     upload_socket.send(msg, true);
