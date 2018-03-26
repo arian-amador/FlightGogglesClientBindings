@@ -119,7 +119,7 @@ void posePublisher(GeneralClient *self){
 // Example Client Node
 ///////////////////////
 
-int main(int argc, char **argv) {
+int main() {
   // Create client
   GeneralClient generalClient;
 

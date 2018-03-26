@@ -1,6 +1,34 @@
 {
     "files.associations": {
         "*.tcc": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cmath": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "cwchar": "cpp",
+        "array": "cpp",
+        "atomic": "cpp",
+        "chrono": "cpp",
+        "cstdint": "cpp",
+        "ctime": "cpp",
+        "exception": "cpp",
+        "functional": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "new": "cpp",
+        "ratio": "cpp",
+        "stdexcept": "cpp",
+        "thread": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "typeinfo": "cpp",
+        "utility": "cpp"
     }
 }
