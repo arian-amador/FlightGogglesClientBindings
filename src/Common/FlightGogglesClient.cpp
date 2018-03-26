@@ -28,7 +28,7 @@ void FlightGogglesClient::initializeConnections()
 }
 
 
-void FlightGogglesClient::setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index) {
+void FlightGogglesClient::setCameraPoseUsingROSCoordinates(Transform3 ros_pose, int cam_index) {
   // To transforms
   Transform3 NED_pose = convertROSToNEDCoordinates(ros_pose);
   Transform3 unity_pose = convertNEDGlobalPoseToGlobalUnityCoordinates(NED_pose);

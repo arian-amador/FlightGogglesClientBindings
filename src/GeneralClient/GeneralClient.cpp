@@ -7,7 +7,7 @@
 
 #include "GeneralClient.hpp"
 
-#define SHOW_DEBUG_IMAGE_FEED false
+#define SHOW_DEBUG_IMAGE_FEED true
 
 
 ///////////////////////
@@ -15,6 +15,7 @@
 ///////////////////////
 
 GeneralClient::GeneralClient(){
+  startTime = flightGoggles.getTimestamp();
 }
 
 
@@ -71,14 +72,15 @@ void GeneralClient::addCameras(){
 
 // Do a simple circular trajectory
 void GeneralClient::updateCameraTrajectory(){
-  double period = 5.0f;
-  double t = flightGoggles.getTimestamp()/1e6f;
-  double theta = (t/period)*2.0f*M_PI;
+  double period = 15.0f;
+  double r = 2.0f;
+  double t = (flightGoggles.getTimestamp()-startTime)/1000000.0f;
+  double theta = -((t/period)*2.0f*M_PI);
   
   Transform3 camera_pose;
-  camera_pose.translation() = Vector3(cos(theta), sin(theta) ,1);
+  camera_pose.translation() = Vector3(r*cos(theta)-3.0f, r*sin(theta) + 4.75f, 1.5f);
   // Set rotation matrix using pitch, roll, yaw
-  camera_pose.linear() = Eigen::AngleAxisd(theta, Eigen::Vector3d(0,0,1)).toRotationMatrix();
+  camera_pose.linear() = Eigen::AngleAxisd(theta-M_PI, Eigen::Vector3d(0,0,1)).toRotationMatrix();
 
   // Populate status message with new pose
   flightGoggles.setCameraPoseUsingROSCoordinates(camera_pose, 0);

@@ -84,7 +84,7 @@ struct StateMessage_t
 inline void to_json(json &j, const StateMessage_t &o)
 {
   j = json{// Initializers
-           {"maxFramerate", 1e3}, // FG should always try to go fast. Is throttled by client side pose requests.
+           {"maxFramerate", o.maxFramerate},
            {"sceneIsInternal", o.sceneIsInternal},
            {"sceneFilename", o.sceneFilename},
            {"compressImage", o.compressImage},

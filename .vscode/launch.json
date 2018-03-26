@@ -9,7 +9,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/src/GeneralClient/GeneralClient",
+            "program": "${workspaceFolder}/build/bin/GeneralClient",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

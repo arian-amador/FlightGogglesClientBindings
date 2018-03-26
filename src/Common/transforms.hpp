@@ -120,9 +120,9 @@ Transform3 convertROSToNEDCoordinates(Transform3 ENUworld_T_object)
 
     // Rotate robot pose by -90deg about robot z axis since ROS
     // expects that "X" is forward in robot frame.
-    Quaternionx Y_front_to_X_front_quat(sqrt(0.5f),	0.0f, 0.0f, -sqrt(0.5f));
+    // Quaternionx Y_front_to_X_front_quat(sqrt(0.5f),	0.0f, 0.0f, -sqrt(0.5f));
 
-    NED_pose = NED_pose * Y_front_to_X_front_quat;
+    // NED_pose = Y_front_to_X_front_quat * NED_pose;
 
 
     return NED_pose;

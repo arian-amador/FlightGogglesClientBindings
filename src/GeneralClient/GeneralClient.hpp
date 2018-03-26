@@ -19,6 +19,9 @@ class GeneralClient {
   // FlightGoggles interface object
   FlightGogglesClient flightGoggles;
 
+  // Counter for keeping track of trajectory position
+  int64_t startTime;
+
   // constructor
   GeneralClient();
 
