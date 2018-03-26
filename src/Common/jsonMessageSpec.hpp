@@ -15,13 +15,15 @@
 #include "json.hpp"
 using json = nlohmann::json;
 
-namespace unity_outgoing {
+namespace unity_outgoing
+{
 
-struct Camera_t {
+struct Camera_t
+{
   std::string ID;
   // Position and rotation use Unity left-handed coordinates.
   // Z North, X East, Y up.
-  // E.G. East, Up, North. 
+  // E.G. East, Up, North.
   std::vector<double> position;
   std::vector<double> rotation;
   // Metadata
@@ -31,7 +33,8 @@ struct Camera_t {
 };
 
 // Window class for decoding the ZMQ messages.
-struct Window_t {
+struct Window_t
+{
   std::string ID;
   std::vector<double> position;
   std::vector<double> rotation;
@@ -40,12 +43,21 @@ struct Window_t {
   std::vector<double> size;
 };
 
-struct StateMessage_t {
+struct StateMessage_t
+{
   // Constant values for startup
   int maxFramerate;
   bool sceneIsInternal;
   std::string sceneFilename;
   bool compressImage;
+  // CTAA settings
+  float temporalJitterScale;
+  int temporalStability;
+  float hdrResponse;
+  float sharpness;
+  float adaptiveEnhance;
+  float microShimmerReduction;
+  float staticStabilityPower;
   // Frame Metadata
   int64_t utime;
   int camWidth;
@@ -60,12 +72,21 @@ struct StateMessage_t {
 // Json constructors
 
 // StateMessage_t
-inline void to_json(json& j, const StateMessage_t& o) {
+inline void to_json(json &j, const StateMessage_t &o)
+{
   j = json{// Initializers
            {"maxFramerate", o.maxFramerate},
            {"sceneIsInternal", o.sceneIsInternal},
            {"sceneFilename", o.sceneFilename},
            {"compressImage", o.compressImage},
+           // CTAA settings
+           {"temporalJitterScale", o.temporalJitterScale},
+           {"temporalStability", o.temporalStability},
+           {"hdrResponse", o.hdrResponse},
+           {"sharpness", o.sharpness},
+           {"adaptiveEnhance", o.adaptiveEnhance},
+           {"microShimmerReduction", o.microShimmerReduction},
+           {"staticStabilityPower", o.staticStabilityPower},
            // Frame Metadata
            {"utime", o.utime},
            {"camWidth", o.camWidth},
@@ -78,7 +99,8 @@ inline void to_json(json& j, const StateMessage_t& o) {
 }
 
 // Camera_t
-inline void to_json(json& j, const Camera_t& o) {
+inline void to_json(json &j, const Camera_t &o)
+{
   j = json{{"ID", o.ID},
            {"position", o.position},
            {"rotation", o.rotation},
@@ -88,7 +110,8 @@ inline void to_json(json& j, const Camera_t& o) {
 }
 
 // Window_t
-inline void to_json(json& j, const Window_t& o) {
+inline void to_json(json &j, const Window_t &o)
+{
   j = json{{"ID", o.ID},
            {"position", o.position},
            {"rotation", o.rotation},
@@ -98,9 +121,11 @@ inline void to_json(json& j, const Window_t& o) {
 }
 
 // Struct for returning metadata from Unity.
-namespace unity_incoming {
+namespace unity_incoming
+{
 
-struct RenderMetadata_t {
+struct RenderMetadata_t
+{
   // Metadata
   int64_t utime;
   int camWidth;
@@ -115,7 +140,8 @@ struct RenderMetadata_t {
 // Json Parsers
 
 // RenderMetadata_t
-inline void from_json(const json& j, RenderMetadata_t& o) {
+inline void from_json(const json &j, RenderMetadata_t &o)
+{
   o.utime = j.at("utime").get<int64_t>();
   o.camWidth = j.at("camWidth").get<int>();
   o.camHeight = j.at("camHeight").get<int>();
@@ -126,11 +152,11 @@ inline void from_json(const json& j, RenderMetadata_t& o) {
 }
 
 // Struct for outputting parsed received messages to handler functions
-struct RenderOutput_t {
+struct RenderOutput_t
+{
   RenderMetadata_t renderMetadata;
   std::vector<cv::Mat> images;
 };
-
 }
 
 #endif
