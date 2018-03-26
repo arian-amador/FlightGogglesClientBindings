@@ -1,8 +1,3 @@
-#cmake_minimum_required(VERSION 2.8.3)
-#project(flight_goggles_client_example)
-
-## Compile as C++11, supported in ROS Kinetic and newer
-#add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -14,9 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
 )
-
-#find_package( Eigen3 REQUIRED )
-
 
 catkin_package(
     LIBRARIES simulator
