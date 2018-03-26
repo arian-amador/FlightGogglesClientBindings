@@ -1,2 +1,3 @@
 add_subdirectory(Common)
 add_subdirectory(GeneralClient)
+add_subdirectory(ROSClient)

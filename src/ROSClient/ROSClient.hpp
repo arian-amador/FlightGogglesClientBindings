@@ -6,7 +6,7 @@
  * @brief  Basic client interface for FlightGoggles.
  */
 
-#include <flight_goggles_client.hpp>
+#include <FlightGogglesClient.hpp>
 // #include <jsonMessageSpec.hpp>
 
 #include <iostream>
@@ -22,25 +22,16 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
-
-// For converting ROS/LCM coordinates to Unity coordinates
-#include "transforms.hpp"
-
-class SyntheticImagesPublisher {
+class ROSClient {
 public:
     // FlightGoggles interface object
 	FlightGogglesClient flightGoggles;
 
-	// Base status object (which holds camera settings, env settings, etc)
-	unity_outgoing::StateMessage_t state;
-
-	// // constructor
-	// SyntheticImagesPublisher(){}
+	// constructor
+	ROSClient();
 
 	// Populate starting settings into state
 	void populateRenderSettings();
-
-	void setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index);
 
 	void poseSubscriber(const nav_msgs::Odometry::ConstPtr& msg);
 private:

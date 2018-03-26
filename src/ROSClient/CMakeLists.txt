@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(flight_goggles_client_example)
+#cmake_minimum_required(VERSION 2.8.3)
+#project(flight_goggles_client_example)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+#add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
 )
 
-find_package( Eigen3 REQUIRED )
+#find_package( Eigen3 REQUIRED )
 
 
 catkin_package(
@@ -26,20 +26,16 @@ catkin_package(
     tf2
 )
 
-
+# Include ROS dirs
 include_directories(
-  src
-  ../include/lib
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
 )
 
+# Compile ROS nodes
+add_executable(ROSClient ROSClient.cpp)
+target_link_libraries(ROSClient ${OpenCV_LIBS} FlightGogglesClientLib pthread ${catkin_LIBRARIES})
 
-
-add_executable(synthetic_images_pulisher ./src/synthetic_images_pulisher.cpp)
-target_link_libraries(synthetic_images_pulisher ${OpenCV_LIBS} flight_goggles_client -lpthread ${catkin_LIBRARIES})
-
-add_executable(trajectory_generation ./src/trajectory_generation.cpp)
+add_executable(trajectory_generation trajectory_generation.cpp)
 target_link_libraries(trajectory_generation ${catkin_LIBRARIES})
 
 

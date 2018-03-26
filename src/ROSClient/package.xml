@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>flight_goggles_client_example</name>
+  <name>flightgoggles_client_bindings</name>
   <version>0.0.0</version>
   <description>The flight_goggles_client_example package</description>
 
