@@ -80,9 +80,6 @@ bool FlightGogglesClient::requestRender()
       return false;
     }
 
-    // Tell unity to always try its hardest to render as fast as it can.
-    state.maxFramerate = 1e3;
-
     // Debug
     // std::cout << "Frame " << std::to_string(state.utime) << std::endl;
 
