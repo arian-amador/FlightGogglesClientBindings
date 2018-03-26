@@ -22,6 +22,12 @@ class GeneralClient {
   // constructor
   GeneralClient();
 
+  // Add RGBD camera settings to scene.
+  void addCameras();
+
+  // Do a simple trajectory with the camera
+  void updateCameraTrajectory();
+
 };
 
 #endif
