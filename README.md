@@ -4,21 +4,7 @@ Client bindings for the [FlightGoggles hardware in-the-loop simulation environme
 
 Quick start instructions can be found [here](https://github.com/AgileDrones/FlightGoggles/README.md) 
 
-# Quick Start Guide for OpenCV Bindings
-
-```bash
-# Install required libraries
-sudo apt install libzmqpp-dev libeigen3-dev libopencv-dev
-# Clone client bindings
-git clone --recursive https://github.com/AgileDrones/FlightGogglesClientBindings.git
-# Setup and build
-cd FlightGogglesClientBindings
-mkdir build
-cd build
-cmake ../ && make
-```
-
-# Repo Format
+## Repo Format
 
 ```bash
 ├── build
