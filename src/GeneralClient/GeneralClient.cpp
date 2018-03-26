@@ -28,8 +28,17 @@ void GeneralClient::populateRenderSettings(){
   state.camWidth = 1024;
   state.camHeight = 768;
   state.camFOV = 70.0f;
-  state.camDepthScale = 0.01; // 5cm resolution
+  state.camDepthScale = 0.05; // 5cm resolution
   
+  // CTAA AntiAliasing Settings
+  state.temporalJitterScale = 0.475f; // [0.0, 0.5] default 0.475  
+  state.temporalStability = 8; // int [3,16] default 8            
+  state.hdrResponse = 0.001f; // [0.001, 1.0] default 0.001        
+  state.sharpness = 9.5f; // [0.0, 10.0] default 9.5               
+  state.adaptiveEnhance = 0.32f; // [0.2, 0.5] default 0.32        
+  state.microShimmerReduction = 3.0f; // [0.01, 10.0] default 3.0  
+  state.staticStabilityPower = 0.5f; // [0.0, 1.0] default 0.5     
+                                
   // Prepopulate metadata of cameras
   unity_outgoing::Camera_t cam_RGB;
   cam_RGB.ID = "Camera_RGB";
