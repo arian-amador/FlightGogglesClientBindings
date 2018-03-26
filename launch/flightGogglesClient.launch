@@ -1,0 +1,13 @@
+<!-- Basic launch script for running FlightGoggles and ROS. -->
+
+<launch>
+	<!-- Generate simulated trajectory -->
+	<node pkg="flightGogglesClient" name="trajectory" type="trajectoryGeneration">
+	</node>
+
+	<!-- Generate synthetic images -->
+	<node pkg="flightGogglesClient" name="image" type="syntheticImagesPublisher">
+	</node>
+
+</launch>
+

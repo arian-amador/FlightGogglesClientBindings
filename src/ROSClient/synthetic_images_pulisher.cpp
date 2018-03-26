@@ -51,7 +51,7 @@ void SyntheticImagesPublisher::populateRenderSettings(){
 
 void SyntheticImagesPublisher::setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index) {
   // To transforms
-  Transform3 NED_pose = convertENUToNEDCoordinates(ros_pose);
+  Transform3 NED_pose = convertROSToNEDCoordinates(ros_pose);
   Transform3 unity_pose = convertNEDGlobalPoseToGlobalUnityCoordinates(NED_pose);
 
   // Extract position and rotation

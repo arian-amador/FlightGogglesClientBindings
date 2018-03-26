@@ -1,6 +1,16 @@
 #ifndef FLIGHTGOGGLESTRANSFORMS_H
 #define FLIGHTGOGGLESTRANSFORMS_H
 
+/**
+ * @brief A set of functions that convert common right handed coordinate 
+ * systems used in robotics to the left hand system used by the FlightGoggles 
+ * backend (Unity 3D).
+ * 
+ * @file transforms.hpp
+ * @author Winter Guerra <winterg@mit.edu>
+ * @date 2018-03-25
+ */
+
 ////////////////////////////////
 // TRANSFORMS
 ////////////////////////////////
@@ -21,29 +31,13 @@ typedef Eigen::Matrix4d Matrix4;
 typedef Eigen::Matrix3d Matrix3;
 Eigen::IOFormat CSV(PRECISION, DONTALIGNCOLS, ",", ",", "", "", "", "");
 
-// This function converts right hand rule NED pose to left handed rule coordinates (as used by Unity).
-Transform3 convertNEDGlobalPoseToGlobalUnityCoordinates(
-    Transform3 NEDworld_T_object, Transform3 unityWorld_T_NEDworld)
-{
-    // Switch axis to unity axis.
-    Matrix4 unity_pose_T_NED_pose;
-    // x->z, y->x, z->-y
-    // clang-format off
-    unity_pose_T_NED_pose <<    0, 1, 0,  0,
-                                0, 0, -1, 0,
-                                1, 0, 0,  0,
-                                0, 0, 0,  1;
-    // clang-format on
-
-    Transform3 unity_pose;
-
-    unity_pose.matrix() = unity_pose_T_NED_pose * unityWorld_T_NEDworld.matrix() *
-                          NEDworld_T_object.matrix() *
-                          unity_pose_T_NED_pose.transpose();
-
-    return unity_pose;
-}
-
+/**
+ * @brief Converts right hand rule North East Down (NED) global poses to 
+ * left handed coordinates (as used by the Unity3D backend of FlightGoggles).
+ * 
+ * @param NEDworld_T_object 
+ * @return Transform3 
+ */
 Transform3 convertNEDGlobalPoseToGlobalUnityCoordinates(
     Transform3 NEDworld_T_object)
 {
@@ -66,7 +60,50 @@ Transform3 convertNEDGlobalPoseToGlobalUnityCoordinates(
     return unity_pose;
 }
 
-Transform3 convertENUToNEDCoordinates(Transform3 ENUworld_T_object)
+/**
+ * @brief Converts right hand rule North East Down (NED) poses to left handed 
+ * rule coordinates (as used by Unity3D). Takes in an additional parameter 
+ * for the translational and rotational offset between the FlightGoggles world
+ * and the global NED poses used by the robot.
+ * 
+ * @deprecated - will be removed soon.
+ * 
+ * @param NEDworld_T_object 
+ * @param unityWorld_T_NEDworld 
+ * @return Transform3 
+ */
+Transform3 convertNEDGlobalPoseToGlobalUnityCoordinates(
+    Transform3 NEDworld_T_object, Transform3 unityWorld_T_NEDworld)
+{
+    // Switch axis to unity axis.
+    Matrix4 unity_pose_T_NED_pose;
+    // x->z, y->x, z->-y
+    // clang-format off
+    unity_pose_T_NED_pose <<    0, 1, 0,  0,
+                                0, 0, -1, 0,
+                                1, 0, 0,  0,
+                                0, 0, 0,  1;
+    // clang-format on
+
+    Transform3 unity_pose;
+
+    unity_pose.matrix() = unity_pose_T_NED_pose * unityWorld_T_NEDworld.matrix() *
+                          NEDworld_T_object.matrix() *
+                          unity_pose_T_NED_pose.transpose();
+
+    return unity_pose;
+}
+
+/**
+ * @brief Converts ROS global poses to NED poses. These poses are then converted to 
+ * Unity left handed coordinates. Assumes that ROS global coordinates for translation are 
+ * East north up (ENU) and robot local coordinates are North west up (NWU). E.g. the robot 
+ * local X axis is going out of the camera.  
+ * 
+ * @param ENUworld_T_object 
+ * @return Transform3 
+ */
+Transform3 convertROSToNEDCoordinates(Transform3 ENUworld_T_object)
 {
     // Switch ENU axis to NED axis.
     Matrix4 ENU_pose_T_NED_pose;
@@ -80,6 +117,13 @@ Transform3 convertENUToNEDCoordinates(Transform3 ENUworld_T_object)
 
     Transform3 NED_pose;
     NED_pose.matrix() = ENU_pose_T_NED_pose * ENUworld_T_object.matrix() * ENU_pose_T_NED_pose.transpose();
+
+    // Rotate robot pose by -90deg about robot z axis since ROS
+    // expects that "X" is forward in robot frame.
+    Quaternionx Y_front_to_X_front_quat(sqrt(0.5f),	0.0f, 0.0f, -sqrt(0.5f));
+
+    NED_pose = NED_pose * Y_front_to_X_front_quat;
+
 
     return NED_pose;
 }
