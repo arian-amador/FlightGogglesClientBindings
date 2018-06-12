@@ -33,13 +33,13 @@ struct Camera_t
 };
 
 // Window class for decoding the ZMQ messages.
-struct Window_t
+struct Object_t
 {
   std::string ID;
+  std::string prefabID;
   std::vector<double> position;
   std::vector<double> rotation;
   // Metadata
-  std::vector<double> color;
   std::vector<double> size;
 };
 
@@ -62,7 +62,7 @@ struct StateMessage_t
   int camWidth = 1024;
   int camHeight = 768;
   float camFOV = 70.0f;
-  double camDepthScale = 0.02; // 0.xx corresponds to xx cm resolution
+  double camDepthScale = 0.20; // 0.xx corresponds to xx cm resolution
   
   // CTAA AntiAliasing Settings
   float temporalJitterScale = 0.475f; // [0.0, 0.5] default 0.475  
@@ -75,7 +75,7 @@ struct StateMessage_t
   
   // Object state update
   std::vector<Camera_t> cameras;
-  std::vector<Window_t> windows;
+  std::vector<Object_t> objects;
 };
 
 // Json constructors
@@ -104,7 +104,7 @@ inline void to_json(json &j, const StateMessage_t &o)
            {"camDepthScale", o.camDepthScale},
            // Object state update
            {"cameras", o.cameras},
-           {"windows", o.windows}};
+           {"objects", o.objects}};
 }
 
 // Camera_t
@@ -118,15 +118,17 @@ inline void to_json(json &j, const Camera_t &o)
            {"outputIndex", o.outputIndex}};
 }
 
-// Window_t
-inline void to_json(json &j, const Window_t &o)
-{
-  j = json{{"ID", o.ID},
-           {"position", o.position},
-           {"rotation", o.rotation},
-           {"color", o.color},
-           {"size", o.size}};
-}
+// Object_t
+inline void to_json(json &j, const Object_t &o)
+  {
+    j = json{
+      {"ID", o.ID},
+      {"prefabID", o.prefabID},
+      {"position", o.position},
+      {"rotation", o.rotation},
+      {"size", o.size}
+    };
+  }
 }
 
 // Struct for returning metadata from Unity.

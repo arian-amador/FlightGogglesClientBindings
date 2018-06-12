@@ -168,7 +168,7 @@ unity_incoming::RenderOutput_t FlightGogglesClient::handleImageResponse()
                 for (uint8_t c = 0; c < renderMetadata.channels[i]; c++)
                 {
                     // cast the input
-                    _castedInputBuffer[y * bufferRowLength + x * renderMetadata.channels[i] + c] = imageData[inv_y * renderMetadata.camWidth * 3 + x * 3 + c];
+                    _castedInputBuffer[y * bufferRowLength + x * renderMetadata.channels[i] + c] = imageData[inv_y * renderMetadata.camWidth * renderMetadata.channels[i] + x*renderMetadata.channels[i] + c];
                 }
             }
         }
