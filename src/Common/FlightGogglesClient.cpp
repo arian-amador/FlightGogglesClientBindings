@@ -152,8 +152,11 @@ unity_incoming::RenderOutput_t FlightGogglesClient::handleImageResponse()
         // Reshape the received image
         // Calculate how long the casted and reshaped image will be.
         uint32_t imageLen = renderMetadata.camWidth * renderMetadata.camHeight * renderMetadata.channels[i];
-        // Get raw image string from ZMQ message
-        std::string imageData = msg.get(i + 1);
+        // Get raw image bytes from ZMQ message.
+        // WARNING: This is a zero-copy operation that also casts the input to an array of unit8_t.
+        // when the message is deleted, this pointer is also dereferenced.
+        const uint8_t* imageData;
+        msg.get(imageData, i + 1);
         // ALL images comes as 3-channel images from Unity. However, if this camera is supposed to be single channel, we need to discard the other 2 channels.
         // Note: We assume that if the camera is supposed to be single channel, Unity has already done the "Right Thing (TM)" and done grayscale conversion for us.
         // This is necessary since Unity is optimized for outputting 3-channel images and dropping channels in Unity would be costly.
@@ -168,7 +171,7 @@ unity_incoming::RenderOutput_t FlightGogglesClient::handleImageResponse()
                 for (uint8_t c = 0; c < renderMetadata.channels[i]; c++)
                 {
                     // cast the input
-                    _castedInputBuffer[y * bufferRowLength + x * renderMetadata.channels[i] + c] = imageData[inv_y * renderMetadata.camWidth * 3 + x * 3 + c];
+                    _castedInputBuffer[y * bufferRowLength + x * renderMetadata.channels[i] + c] = imageData[inv_y * renderMetadata.camWidth * renderMetadata.channels[i] + x*renderMetadata.channels[i] + c];
                 }
             }
         }

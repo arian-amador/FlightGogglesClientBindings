@@ -109,7 +109,7 @@ int main() {
     "FPS_Warehouse_Night",
   ]
    */
-  generalClient.flightGoggles.state.sceneFilename = "Hazelwood_Loft_Full_Night";
+  // generalClient.flightGoggles.state.sceneFilename = "Hazelwood_Loft_Full_Night";
   
   // Fork sample render request thread
   // will request a simple circular trajectory
