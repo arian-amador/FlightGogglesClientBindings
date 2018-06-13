@@ -49,11 +49,12 @@ struct StateMessage_t
   int maxFramerate = 60; 
   bool sceneIsInternal = true;
   // Scene choices in v1.4.1
-  std::string sceneFilename = "Hazelwood_Loft_Full_Night";
+  // std::string sceneFilename = "Hazelwood_Loft_Full_Night";
   // std::string sceneFilename = "Hazelwood_Loft_Full_Day";
   // std::string sceneFilename = "Butterfly_World";
-  // std::string sceneFilename = "FPS_Warehouse_Day";
-  // std::string sceneFilename = "FPS_Warehouse_Night";
+  // std::string sceneFilename = "NYC_Subway";
+  // std::string sceneFilename = "Museum_Day";
+  std::string sceneFilename = "Museum_Day_Small";
 
   bool compressImage = false; // Deprecated. Will be removed in the future.
   
@@ -65,7 +66,7 @@ struct StateMessage_t
   double camDepthScale = 0.20; // 0.xx corresponds to xx cm resolution
   
   // CTAA AntiAliasing Settings
-  float temporalJitterScale = 0.475f; // [0.0, 0.5] default 0.475  
+  float temporalJitterScale = 0.1f; // [0.0, 0.5] default 0.475  
   int temporalStability = 8; // int [3,16] default 8            
   float hdrResponse = 0.001f; // [0.001, 1.0] default 0.001        
   float sharpness = 9.5f; // [0.0, 10.0] default 9.5               
