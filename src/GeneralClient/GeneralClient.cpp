@@ -78,7 +78,7 @@ void GeneralClient::updateCameraTrajectory(){
   double theta = -((t/period)*2.0f*M_PI);
   
   Transform3 camera_pose;
-  camera_pose.translation() = Vector3(r*cos(theta)-3.0f, r*sin(theta) + 4.75f, 1.5f);
+  camera_pose.translation() = Vector3(r*cos(theta), r*sin(theta), 1.5f);
   // Set rotation matrix using pitch, roll, yaw
   camera_pose.linear() = Eigen::AngleAxisd(theta-M_PI, Eigen::Vector3d(0,0,1)).toRotationMatrix();
 
@@ -109,7 +109,7 @@ int main() {
     "FPS_Warehouse_Night",
   ]
    */
-  // generalClient.flightGoggles.state.sceneFilename = "Hazelwood_Loft_Full_Night";
+  generalClient.flightGoggles.state.sceneFilename = "Hazelwood_Loft_Full_Night";
   
   // Fork sample render request thread
   // will request a simple circular trajectory
