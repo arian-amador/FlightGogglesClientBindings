@@ -74,6 +74,10 @@ struct StateMessage_t
   float microShimmerReduction = 3.0f; // [0.01, 10.0] default 3.0  
   float staticStabilityPower = 0.5f; // [0.0, 1.0] default 0.5     
   
+  // Additional metadata to pass through rendering process.
+  // Will be received by consumer of images through the RenderMetadata_t struct.
+  std::map<std::string, std::string> additionalMetadata;
+
   // Object state update
   std::vector<Camera_t> cameras;
   std::vector<Object_t> objects;
@@ -103,6 +107,7 @@ inline void to_json(json &j, const StateMessage_t &o)
            {"camHeight", o.camHeight},
            {"camFOV", o.camFOV},
            {"camDepthScale", o.camDepthScale},
+           {"additionalMetadata", o.additionalMetadata},
            // Object state update
            {"cameras", o.cameras},
            {"objects", o.objects}};
@@ -147,6 +152,8 @@ struct RenderMetadata_t
   // Object state update
   std::vector<std::string> cameraIDs;
   std::vector<int> channels;
+  // Additional metadata passed through the rendering process.
+  std::map<std::string, std::string> additionalMetadata;
 };
 
 // Json Parsers
@@ -154,13 +161,14 @@ struct RenderMetadata_t
 // RenderMetadata_t
 inline void from_json(const json &j, RenderMetadata_t &o)
 {
-  o.utime = j.at("utime").get<int64_t>();
-  o.camWidth = j.at("camWidth").get<int>();
-  o.camHeight = j.at("camHeight").get<int>();
-  o.camDepthScale = j.at("camDepthScale").get<double>();
-  o.isCompressed = j.at("isCompressed").get<bool>();
-  o.cameraIDs = j.at("cameraIDs").get<std::vector<std::string>>();
-  o.channels = j.at("channels").get<std::vector<int>>();
+  o.utime = j.at("utime").get<decltype(o.utime)>();
+  o.camWidth = j.at("camWidth").get<decltype(o.camWidth)>();
+  o.camHeight = j.at("camHeight").get<decltype(o.camHeight)>();
+  o.camDepthScale = j.at("camDepthScale").get<decltype(o.camDepthScale)>();
+  o.isCompressed = j.at("isCompressed").get<decltype(o.isCompressed)>();
+  o.cameraIDs = j.at("cameraIDs").get<decltype(o.cameraIDs)>();
+  o.channels = j.at("channels").get<decltype(o.channels)>();
+  o.additionalMetadata = j.at("additionalMetadata").get<decltype(o.additionalMetadata)>();
 }
 
 // Struct for outputting parsed received messages to handler functions
