@@ -23,6 +23,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
 # Fix cuda linking issues
 set(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 
+# Find CUDA
+find_package(CUDA)
+
 # Find OpenCV
 find_package( OpenCV REQUIRED )
 
