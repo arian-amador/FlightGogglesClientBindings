@@ -1,0 +1,2 @@
+add_executable(OfflineRenderClient OfflineRenderClient.cpp)
+target_link_libraries(OfflineRenderClient  ${OpenCV_LIBS} FlightGogglesClientLib pthread)

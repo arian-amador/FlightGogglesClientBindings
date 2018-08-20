@@ -64,10 +64,11 @@ struct StateMessage_t
   int camHeight = 768;
   float camFOV = 70.0f;
   double camDepthScale = 0.20; // 0.xx corresponds to xx cm resolution
-  
+  bool forceFrameRender = true;
+
   // CTAA AntiAliasing Settings
-  float temporalJitterScale = 0.1f; // [0.0, 0.5] default 0.475  
-  int temporalStability = 8; // int [3,16] default 8            
+  float temporalJitterScale = 0.3f; // [0.0, 0.5] default 0.475  
+  int temporalStability = 12; // int [3,16] default 8            
   float hdrResponse = 0.001f; // [0.001, 1.0] default 0.001        
   float sharpness = 9.5f; // [0.0, 10.0] default 9.5               
   float adaptiveEnhance = 0.32f; // [0.2, 0.5] default 0.32        
@@ -107,6 +108,7 @@ inline void to_json(json &j, const StateMessage_t &o)
            {"camHeight", o.camHeight},
            {"camFOV", o.camFOV},
            {"camDepthScale", o.camDepthScale},
+           {"forceFrameRender", o.forceFrameRender},
            {"additionalMetadata", o.additionalMetadata},
            // Object state update
            {"cameras", o.cameras},
@@ -168,7 +170,7 @@ inline void from_json(const json &j, RenderMetadata_t &o)
   o.isCompressed = j.at("isCompressed").get<decltype(o.isCompressed)>();
   o.cameraIDs = j.at("cameraIDs").get<decltype(o.cameraIDs)>();
   o.channels = j.at("channels").get<decltype(o.channels)>();
-  o.additionalMetadata = j.at("additionalMetadata").get<decltype(o.additionalMetadata)>();
+  //o.additionalMetadata = j.at("additionalMetadata").get<decltype(o.additionalMetadata)>();
 }
 
 // Struct for outputting parsed received messages to handler functions

@@ -31,7 +31,7 @@ void imageConsumer(GeneralClient *self){
       // Display result
       if (SHOW_DEBUG_IMAGE_FEED){
         cv::imshow("Debug RGB", renderOutput.images[0]);
-        cv::imshow("Debug D", renderOutput.images[1]);
+        // cv::imshow("Debug D", renderOutput.images[1]);
         cv::waitKey(1);
       }
     }
@@ -47,27 +47,27 @@ void posePublisher(GeneralClient *self){
     // request render
     self->flightGoggles.requestRender();
     // Throttle requests to framerate.
-    usleep(1e6/self->flightGoggles.state.maxFramerate);
+    usleep(1e6/(self->flightGoggles.state.maxFramerate-1));
     }
 }
 
 void GeneralClient::addCameras(){
   // Prepopulate metadata of cameras (RGBD)
   unity_outgoing::Camera_t cam_RGB;
-  cam_RGB.ID = "Camera_RGB";
-  cam_RGB.channels = 3;
+  cam_RGB.ID = "Camera_G";
+  cam_RGB.channels = 1;
   cam_RGB.isDepth = false;
   cam_RGB.outputIndex = 0;
 
-  unity_outgoing::Camera_t cam_D;
-  cam_D.ID = "Camera_D";
-  cam_D.channels = 1;
-  cam_D.isDepth = true;
-  cam_D.outputIndex = 1;
+  // unity_outgoing::Camera_t cam_D;
+  // cam_D.ID = "Camera_D";
+  // cam_D.channels = 1;
+  // cam_D.isDepth = true;
+  // cam_D.outputIndex = 1;
 
   // Add cameras to persistent state
   flightGoggles.state.cameras.push_back(cam_RGB);
-  flightGoggles.state.cameras.push_back(cam_D);
+  // flightGoggles.state.cameras.push_back(cam_D);
 }
 
 // Do a simple circular trajectory
@@ -84,7 +84,7 @@ void GeneralClient::updateCameraTrajectory(){
 
   // Populate status message with new pose
   flightGoggles.setCameraPoseUsingROSCoordinates(camera_pose, 0);
-  flightGoggles.setCameraPoseUsingROSCoordinates(camera_pose, 1);
+  // flightGoggles.setCameraPoseUsingROSCoordinates(camera_pose, 1);
 }
 
 ///////////////////////
@@ -99,7 +99,12 @@ int main() {
   generalClient.addCameras();
 
   // Set scene parameters.
-  generalClient.flightGoggles.state.maxFramerate = 60; 
+
+  // Single GPU can do 220 fps w/ single camera, 110fps with 2 cameras.
+
+  // 2x gpus can do ~160FPS each with 1 camera
+
+  generalClient.flightGoggles.state.maxFramerate =160; 
   /*
   Available scenes: [
     "Hazelwood_Loft_Full_Night"
