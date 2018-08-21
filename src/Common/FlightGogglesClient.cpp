@@ -10,9 +10,16 @@
 ///////////////////////
 // Constructor
 ///////////////////////
+FlightGogglesClient::FlightGogglesClient(){
+    FlightGogglesClient(0); // default to instance 0
+}
 
-FlightGogglesClient::FlightGogglesClient()
+
+FlightGogglesClient::FlightGogglesClient(int instance_num)
 {
+    upload_port += 2*instance_num;
+    download_port += 2*instance_num;
+
     initializeConnections();
 }
 
@@ -28,9 +35,35 @@ void FlightGogglesClient::initializeConnections()
 }
 
 
-void FlightGogglesClient::setCameraPoseUsingROSCoordinates(Transform3 ros_pose, int cam_index) {
+void FlightGogglesClient::setCameraPoseUsingROSCoordinates(Transform3 ROS_pose, int cam_index) {
   // To transforms
-  Transform3 NED_pose = convertROSToNEDCoordinates(ros_pose);
+  Transform3 NED_pose = convertROSToNEDCoordinates(ROS_pose);
+  Transform3 unity_pose = convertNEDGlobalPoseToGlobalUnityCoordinates(NED_pose);
+
+  // Extract position and rotation
+  std::vector<double> position = {
+    unity_pose.translation()[0],
+    unity_pose.translation()[1],
+    unity_pose.translation()[2],
+  };
+
+  Eigen::Matrix3d rotationMatrix = unity_pose.rotation();
+  Quaternionx quat(rotationMatrix);
+
+  std::vector<double> rotation = {
+    quat.x(),
+    quat.y(),
+    quat.z(),
+    quat.w(),
+  };
+
+  // Set camera position and rotation
+  state.cameras[cam_index].position = position;
+  state.cameras[cam_index].rotation = rotation;
+}
+
+void FlightGogglesClient::setCameraPoseUsingNEDCoordinates(Transform3 NED_pose, int cam_index) {
+  // To transforms
   Transform3 unity_pose = convertNEDGlobalPoseToGlobalUnityCoordinates(NED_pose);
 
   // Extract position and rotation

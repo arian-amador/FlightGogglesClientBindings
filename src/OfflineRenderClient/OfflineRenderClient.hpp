@@ -10,41 +10,47 @@
 // #include <jsonMessageSpec.hpp>
 
 #include <iostream>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <string>
 #include <vector>
+
+#include "csv.h"
+
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+
+namespace fs = std::experimental::filesystem;
 
 class OfflineRenderClient {
  public:
   // FlightGoggles interface object
-  //FlightGogglesClient flightGoggles;
-
-  // constructor
-  OfflineRenderClient();
-
-  // List of cameras to render
-  std::vector<unity_outgoing::Camera_t> cameras;
-
-  // List of FlightGoggles workers 
-  std::vector<OfflineRenderWorker> workers;
-
-  // Directories
-  std::filesystem::path renderDir;
-  std::filesystem::path outputDir;
-  
-};
-
-class OfflineRenderWorker {
-   public:
-  // FlightGoggles interface object
   FlightGogglesClient flightGoggles;
 
   // constructor
-  OfflineRenderWorker(unity_outgoing::Camera_t renderCamera, int instance_num, std::filesystem::path _renderDir);
+  OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Vector7d _poseOffset, std::string _renderDir);
+
+  // PoseList CSV
+  io::CSVReader<8>* csv;
+
+  Vector7d poseOffset;
 
   // Directories
-  std::filesystem::path renderDir;
-}
+  std::string renderDir;
+
+  // Keep track of outstanding render requests
+  std::mutex mutexForRenderQueue;
+  std::condition_variable renderQueueBelowCapacity;
+  std::atomic<int> renderQueueLength;
+  const int renderQueueMaxLength = 150;
+
+  std::atomic<bool> allFramesRequested;
+
+  // Methods
+  void updateCameraPose(Vector7d csvPose);
+
+};
+
 
 #endif

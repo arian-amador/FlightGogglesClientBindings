@@ -68,6 +68,7 @@ class FlightGogglesClient
 
     // Constructor.
     FlightGogglesClient();
+    FlightGogglesClient(int instance_num);
 
     // Connects to FlightGoggles.
     void initializeConnections();
@@ -79,6 +80,7 @@ class FlightGogglesClient
 
     // Set camera pose using ROS coordinates.
     void setCameraPoseUsingROSCoordinates(Eigen::Affine3d ros_pose, int cam_index);
+    void setCameraPoseUsingNEDCoordinates(Transform3 NED_pose, int cam_index);
 
     // Send render request to Unity
     bool requestRender();
