@@ -63,15 +63,15 @@ void OfflineRenderClient::updateCameraPose(Vector7d csvPose){
 // Example consumers and publishers
 ////////////////////////////////////
 
-void imageConsumer(OfflineRenderClient *self){
-    while (!(self->allFramesRequested && self->renderQueueLength<=0)){
+void imageConsumer(OfflineRenderClient& self){
+    while (!(self.allFramesRequested && self.renderQueueLength<=0)){
       // Wait for render result (blocking).
-      unity_incoming::RenderOutput_t renderOutput = self->flightGoggles->handleImageResponse();
+      unity_incoming::RenderOutput_t renderOutput = self.flightGoggles->handleImageResponse();
 
       // Save render result
       for (int i = 0; i < renderOutput.images.size(); i++ ){
         fs::path filename;
-        filename += self->renderDir;
+        filename += self.renderDir;
         filename /= std::to_string(renderOutput.renderMetadata.utime) + std::string("_") + renderOutput.renderMetadata.cameraIDs[i] + std::string(".ppm");
 
         std::cout << "Filename" << filename << std::endl;
@@ -80,43 +80,48 @@ void imageConsumer(OfflineRenderClient *self){
 
       // Update number of outstanding render requests.
 //      std::unique_lock<std::mutex> lk(self->mutexForRenderQueue); // temp lock
-      self->renderQueueLength--;
+      self.renderQueueLength--;
 //      lk.unlock();
-      self->renderQueueBelowCapacity.notify_all();
+//      self->renderQueueBelowCapacity.notify_all();
     }
 }
 
-void posePublisher(OfflineRenderClient *self){
+void posePublisher(OfflineRenderClient& self){
   // Sends render requests to FlightGoggles from CSV
   int64_t utime;
   double x,y,z,quat_x,quat_y,quat_z,quat_w;
 
-  while (self->csv->read_row(utime,x,y,z,quat_x,quat_y,quat_z,quat_w)){
+  while (self.csv->read_row(utime,x,y,z,quat_x,quat_y,quat_z,quat_w)){
 
     // Wait for render queue to empty before requesting more frames
     // If blocked for more than 100ms, request a frame anyway
-    std::unique_lock<std::mutex> lk(self->mutexForRenderQueue);
-    self->renderQueueBelowCapacity.wait_for(lk, std::chrono::milliseconds(100), [self]{return (self->renderQueueLength < self->renderQueueMaxLength);});
-    lk.unlock();
+//    std::unique_lock<std::mutex> lk(self->mutexForRenderQueue);
+//    self->renderQueueBelowCapacity.wait_for(lk, std::chrono::milliseconds(100), [self]{return (self->renderQueueLength < self->renderQueueMaxLength);});
+//    lk.unlock();
+
+    // Spinlock
+    while (!(self.renderQueueLength < self.renderQueueMaxLength)){
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 
     Vector7d csvPose;
     csvPose << x,y,z,quat_x,quat_y,quat_z,quat_w;
 
-    Vector7d flightGogglesPose = csvPose + self->poseOffset;
+    Vector7d flightGogglesPose = csvPose + self.poseOffset;
 
     // Update camera position
-    self->updateCameraPose(flightGogglesPose);
+    self.updateCameraPose(flightGogglesPose);
 
-    self->flightGoggles->state.utime = utime;
+    self.flightGoggles->state.utime = utime;
     // request render
-    self->flightGoggles->requestRender();
+    self.flightGoggles->requestRender(false);
 
     // Update render queue
-    self->renderQueueLength++;
+    self.renderQueueLength++;
 
     }
   
-  self->allFramesRequested = true;
+  self.allFramesRequested = true;
 }
 
 // Master worker thread
@@ -134,12 +139,12 @@ void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Ca
     std::thread imageConsumerThread(imageConsumer, &worker);
 
     // Wait for threads to finish.
-    while (!(worker.allFramesRequested && worker.renderQueueLength <= 0)){
-        sleep(1000);
-    }
+//    while (!(worker.allFramesRequested && worker.renderQueueLength <= 0)){
+//        std::this_thread::sleep_for(std::chrono::seconds(1));
+//    }
 
-    //posePublisherThread.join();
-//    imageConsumerThread.join();
+    posePublisherThread.join();
+    imageConsumerThread.join();
 
 }
 

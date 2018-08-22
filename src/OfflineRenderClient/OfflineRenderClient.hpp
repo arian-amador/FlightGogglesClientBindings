@@ -44,7 +44,7 @@ class OfflineRenderClient {
   std::mutex mutexForRenderQueue;
   std::condition_variable renderQueueBelowCapacity;
   std::atomic<int> renderQueueLength;
-  const int renderQueueMaxLength = 150;
+  const int renderQueueMaxLength = 500;
 
   std::atomic<bool> allFramesRequested;
 

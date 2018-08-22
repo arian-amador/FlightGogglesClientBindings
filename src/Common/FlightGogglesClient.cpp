@@ -93,12 +93,17 @@ void FlightGogglesClient::setCameraPoseUsingNEDCoordinates(Transform3 NED_pose, 
 // Render Functions
 ///////////////////////
 
+// Request render with max FPS throttling.
+bool FlightGogglesClient::requestRender(){
+    requestRender(true);
+}
+
 /**
  * This function is called when a new pose has been received.
  * If the pose is good, asks Unity to render another frame by sending a ZMQ
  * message.
 */
-bool FlightGogglesClient::requestRender()
+bool FlightGogglesClient::requestRender(bool throttleRequest)
 {
     // Make sure that we have a pose that is newer than the last rendered pose.
     if (!(state.utime > last_uploaded_utime))
@@ -108,7 +113,7 @@ bool FlightGogglesClient::requestRender()
     }
 
     // Limit Unity framerate by throttling requests
-    if (state.utime < (last_uploaded_utime + (1e6)/state.maxFramerate)) {
+    if ( (state.utime < (last_uploaded_utime + (1e6)/state.maxFramerate)) && throttleRequest) {
       // Skip this render frame.
       return false;
     }
