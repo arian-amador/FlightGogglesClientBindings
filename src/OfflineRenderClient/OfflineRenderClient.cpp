@@ -8,7 +8,7 @@
 #include "OfflineRenderClient.hpp"
 
 // 2 remote instances, 1 local instance.
-#define NUM_FG_INSTANCES 1
+#define NUM_FG_INSTANCES 3
 
 
 ///////////////////////
