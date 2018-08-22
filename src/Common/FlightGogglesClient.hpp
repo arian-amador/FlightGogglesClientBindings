@@ -84,6 +84,7 @@ class FlightGogglesClient
 
     // Send render request to Unity
     bool requestRender();
+    bool requestRender(bool throttleRequest);
 
     ///////////////////////////////////////////
     // FLIGHTGOGGLES INCOMING MESSAGE HANDLERS

@@ -27,6 +27,7 @@ void FlightGogglesClient::initializeConnections()
 {
     std::cout << "Initializing ZMQ connections..." << std::endl;
     // create and bind a upload_socket
+    //upload_socket.set(zmqpp::socket_option::delay_attach_on_connect, true); // Do not allow sending messages until render server connects
     upload_socket.bind(client_address + ":" + std::to_string(upload_port));
     // create and bind a download_socket
     download_socket.bind(client_address + ":" + std::to_string(download_port));
@@ -93,22 +94,27 @@ void FlightGogglesClient::setCameraPoseUsingNEDCoordinates(Transform3 NED_pose, 
 // Render Functions
 ///////////////////////
 
+// Request render with max FPS throttling.
+bool FlightGogglesClient::requestRender(){
+    requestRender(true);
+}
+
 /**
  * This function is called when a new pose has been received.
  * If the pose is good, asks Unity to render another frame by sending a ZMQ
  * message.
 */
-bool FlightGogglesClient::requestRender()
+bool FlightGogglesClient::requestRender(bool throttleRequest)
 {
     // Make sure that we have a pose that is newer than the last rendered pose.
-    if (!(state.utime > last_uploaded_utime))
+    if (!(state.utime > last_uploaded_utime) && throttleRequest)
     {
         // Skip this render frame.
         return false;
     }
 
     // Limit Unity framerate by throttling requests
-    if (state.utime < (last_uploaded_utime + (1e6)/state.maxFramerate)) {
+    if ( (state.utime < (last_uploaded_utime + (1e6)/state.maxFramerate)) && throttleRequest) {
       // Skip this render frame.
       return false;
     }

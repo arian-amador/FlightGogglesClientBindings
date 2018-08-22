@@ -43,10 +43,11 @@ class OfflineRenderClient {
   // Keep track of outstanding render requests
   std::mutex mutexForRenderQueue;
   std::condition_variable renderQueueBelowCapacity;
-  std::atomic<int> renderQueueLength;
+  int renderQueueLength = 0;
   const int renderQueueMaxLength = 150;
 
   std::atomic<bool> allFramesRequested;
+  std::atomic<bool> connected;
 
   // Methods
   void updateCameraPose(Vector7d csvPose);
