@@ -30,12 +30,13 @@ class OfflineRenderClient {
   FlightGogglesClient* flightGoggles;
 
   // constructor
-  OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Vector7d _poseOffset, std::string _renderDir);
+  OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Vector7d _poseOffset, std::string _renderDir);
 
   // PoseList CSV
   io::CSVReader<8>* csv;
 
   Vector7d poseOffset;
+  Transform3 body_T_camera;
 
   // Directories
   std::string renderDir;

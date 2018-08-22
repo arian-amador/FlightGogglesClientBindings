@@ -15,9 +15,10 @@
 // Constructors
 ///////////////////////
 
-OfflineRenderClient::OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Vector7d _poseOffset, std::string _renderDir){
+OfflineRenderClient::OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Vector7d _poseOffset, std::string _renderDir){
   // Save params
   poseOffset = _poseOffset;
+  body_T_camera = _cameraPoseOffset;
   renderDir = _renderDir;
 
   // set connection params
@@ -43,12 +44,14 @@ OfflineRenderClient::OfflineRenderClient(std::string environmentString,unity_out
 // Read from the CSV
 void OfflineRenderClient::updateCameraPose(Vector7d csvPose){
 
+  // Get body pose in NED
+  Transform3 bodyPose;
+  bodyPose.fromPositionOrientationScale(Vector3(csvPose[0],csvPose[1],csvPose[2]),
+    Quaternionx(csvPose[3],csvPose[4],csvPose[5],csvPose[6]), Vector3(1, 1, 1));
 
+  // Get camera pose from body and body_T_camera transforms
   Transform3 cameraPose;
-  cameraPose.fromPositionOrientationScale(Vector3(csvPose[0],csvPose[1],csvPose[2]), Quaternionx(csvPose[3],csvPose[4],csvPose[5],csvPose[6]), Vector3(1, 1, 1));
-//  cameraPose.translation() = Vector3(r*cos(theta), r*sin(theta), 1.5f);
-//  // Set rotation matrix using pitch, roll, yaw
-//  cameraPose.linear() = Eigen::AngleAxisd(theta-M_PI, Eigen::Vector3d(0,0,1)).toRotationMatrix();
+  cameraPose = bodyPose * body_T_camera;
 
   // Populate status message with new pose
   flightGoggles->setCameraPoseUsingNEDCoordinates(cameraPose, 0);
@@ -104,7 +107,7 @@ void posePublisher(OfflineRenderClient& self){
     // Wait for render queue to empty before requesting more frames
     // If blocked for more than 100ms, request a frame anyway
     std::unique_lock<std::mutex> lk(self.mutexForRenderQueue);
-    self.renderQueueBelowCapacity.wait_for(lk, std::chrono::milliseconds(100), [&self]{return (self.renderQueueLength < self.renderQueueMaxLength);});
+    self.renderQueueBelowCapacity.wait(lk, [&self]{return (self.renderQueueLength < self.renderQueueMaxLength);});
 
     while ((self.renderQueueLength < self.renderQueueMaxLength)){
 
@@ -132,10 +135,10 @@ void posePublisher(OfflineRenderClient& self){
 }
 
 // Master worker thread
-void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Vector7d _poseOffset, std::string _renderDir){
+void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Vector7d _poseOffset, std::string _renderDir){
 
     // Create client object
-    OfflineRenderClient worker(environmentString,_renderCam, _instanceNum, _trajectoryPath, _poseOffset, _renderDir);
+    OfflineRenderClient worker(environmentString,_renderCam, _instanceNum, _trajectoryPath, _cameraPoseOffset, _poseOffset, _renderDir);
 
     // Spawn worker threads
     // Fork sample render request thread
@@ -153,6 +156,17 @@ void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Ca
     posePublisherThread.join();
     imageConsumerThread.join();
 
+}
+
+
+// Calculate Unity transformation
+Transform3 computeCameraBody_T_cam_(Vector7d cameraLocalOffset){
+    Transform3 body_T_cam;
+    body_T_cam.fromPositionOrientationScale(
+        Vector3(cameraLocalOffset[0],cameraLocalOffset[1],cameraLocalOffset[2]),
+        Quaternionx(cameraLocalOffset[3],cameraLocalOffset[4],cameraLocalOffset[5],cameraLocalOffset[6]),
+        Vector3(1, 1, 1));
+    return body_T_cam;
 }
 
 
@@ -202,12 +216,20 @@ int main(int argc, char **argv) {
   cameras.push_back(camR);
   cameras.push_back(camD);
 
+  // Define pose offsets for cameras
+  std::vector<Transform3> cameraPoseTransforms;
+  cameraPoseTransforms.push_back(computeCameraBody_T_cam_((Vector7d() << 0,-0.05,0,   1,0,0,0).finished()));
+  cameraPoseTransforms.push_back(computeCameraBody_T_cam_((Vector7d() << 0,0.05,0,    1,0,0,0).finished()));
+  cameraPoseTransforms.push_back(computeCameraBody_T_cam_((Vector7d() << 0,0,0,       0.707,0,-0.707,0).finished()));
+
+
+
   // spawn parallel render clients for each camera
   std::vector<std::thread> workers;
   workers.reserve(NUM_FG_INSTANCES);
 
   for (int i = 0; i < NUM_FG_INSTANCES; i++){
-      std::thread worker(OfflineRenderClientThread, environment_string, cameras[i], i, trajectoryPath, environmentPoseOffset, renderDir);
+      std::thread worker(OfflineRenderClientThread, environment_string, cameras[i], i, trajectoryPath, cameraPoseTransforms[i], environmentPoseOffset, renderDir);
 
       workers.push_back(std::move(worker));
 
@@ -217,28 +239,5 @@ int main(int argc, char **argv) {
   for (auto& t : workers)
       t.join();
 
-
-
-
-  // // Create client
-  // OfflineRenderClient OfflineRenderClient;
-
-  // // Read parameters from json files
-  // OfflineRenderClient.flightGoggles.state.maxFramerate = 60; 
-  // OfflineRenderClient.flightGoggles.state.sceneFilename = "Hazelwood_Loft_Full_Night";
-  
-  // // Instantiate RGBD cameras
-  // OfflineRenderClient.addCameras();
-  
-  // // Fork sample render request thread
-  // // will request a simple circular trajectory
-  // std::thread posePublisherThread(posePublisher, &OfflineRenderClient);
-
-  // // Fork a sample image consumer thread
-  // std::thread imageConsumerThread(imageConsumer, &OfflineRenderClient);
-
-  // // Spin
-  // while (true) {sleep(1);}
-
-  return 1;
+  return 0;
 }

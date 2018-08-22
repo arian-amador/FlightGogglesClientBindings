@@ -62,7 +62,7 @@ struct StateMessage_t
   int64_t utime;
   int camWidth = 1024;
   int camHeight = 768;
-  float camFOV = 70.0f;
+  float camFOV = 60.0f;
   double camDepthScale = 0.20; // 0.xx corresponds to xx cm resolution
   bool forceFrameRender = true;
 
