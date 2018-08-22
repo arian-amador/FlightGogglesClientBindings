@@ -40,8 +40,8 @@ class FlightGogglesClient
 
     // ZMQ connection parameters
     std::string client_address = "tcp://*";
-    std::string upload_port = "10253";
-    std::string download_port = "10254";
+    int upload_port = 10253;
+    int download_port = 10254;
     // Socket variables
     zmqpp::context context;
     zmqpp::socket upload_socket {

@@ -27,9 +27,9 @@ void FlightGogglesClient::initializeConnections()
 {
     std::cout << "Initializing ZMQ connections..." << std::endl;
     // create and bind a upload_socket
-    upload_socket.bind(client_address + ":" + upload_port);
+    upload_socket.bind(client_address + ":" + std::to_string(upload_port));
     // create and bind a download_socket
-    download_socket.bind(client_address + ":" + download_port);
+    download_socket.bind(client_address + ":" + std::to_string(download_port));
     download_socket.subscribe("");
     std::cout << "Done!" << std::endl;
 }

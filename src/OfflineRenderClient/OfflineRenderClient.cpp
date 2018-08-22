@@ -8,7 +8,7 @@
 #include "OfflineRenderClient.hpp"
 
 // 2 remote instances, 1 local instance.
-#define NUM_FG_INSTANCES 3
+#define NUM_FG_INSTANCES 1
 
 
 ///////////////////////
@@ -26,17 +26,17 @@ OfflineRenderClient::OfflineRenderClient(std::string environmentString,unity_out
   
   
   // Spawn flightGoggles connection
-  flightGoggles = FlightGogglesClient(_instanceNum);
+
+  flightGoggles = new FlightGogglesClient(_instanceNum);
 
   // Get the pose list from CSV.
-  io::CSVReader<8> _csv(_trajectoryPath);
-  csv = &_csv;
+  csv = new io::CSVReader<8>(_trajectoryPath);
   csv->set_header("utime", "x","y","z","quat_x","quat_y","quat_z","quat_w");
 
   // // Add cameras to persistent state
-  flightGoggles.state.cameras.push_back(_renderCam);
+  flightGoggles->state.cameras.push_back(_renderCam);
   // Set environment
-  flightGoggles.state.sceneFilename = environmentString;
+  flightGoggles->state.sceneFilename = environmentString;
 }
 
 
@@ -52,7 +52,7 @@ void OfflineRenderClient::updateCameraPose(Vector7d csvPose){
 //  cameraPose.linear() = Eigen::AngleAxisd(theta-M_PI, Eigen::Vector3d(0,0,1)).toRotationMatrix();
 
   // Populate status message with new pose
-  flightGoggles.setCameraPoseUsingNEDCoordinates(cameraPose, 0);
+  flightGoggles->setCameraPoseUsingNEDCoordinates(cameraPose, 0);
 
 }
 
@@ -66,20 +66,22 @@ void OfflineRenderClient::updateCameraPose(Vector7d csvPose){
 void imageConsumer(OfflineRenderClient *self){
     while (!(self->allFramesRequested && self->renderQueueLength<=0)){
       // Wait for render result (blocking).
-      unity_incoming::RenderOutput_t renderOutput = self->flightGoggles.handleImageResponse();
+      unity_incoming::RenderOutput_t renderOutput = self->flightGoggles->handleImageResponse();
 
       // Save render result
       for (int i = 0; i < renderOutput.images.size(); i++ ){
         fs::path filename;
         filename += self->renderDir;
         filename /= std::to_string(renderOutput.renderMetadata.utime) + std::string("_") + renderOutput.renderMetadata.cameraIDs[i] + std::string(".ppm");
+
+        std::cout << "Filename" << filename << std::endl;
         cv::imwrite(filename, renderOutput.images[i]);
       }
 
       // Update number of outstanding render requests.
-      std::unique_lock<std::mutex> lk(self->mutexForRenderQueue); // temp lock
+//      std::unique_lock<std::mutex> lk(self->mutexForRenderQueue); // temp lock
       self->renderQueueLength--;
-      lk.unlock();
+//      lk.unlock();
       self->renderQueueBelowCapacity.notify_all();
     }
 }
@@ -90,24 +92,28 @@ void posePublisher(OfflineRenderClient *self){
   double x,y,z,quat_x,quat_y,quat_z,quat_w;
 
   while (self->csv->read_row(utime,x,y,z,quat_x,quat_y,quat_z,quat_w)){
+
     // Wait for render queue to empty before requesting more frames
+    // If blocked for more than 100ms, request a frame anyway
     std::unique_lock<std::mutex> lk(self->mutexForRenderQueue);
-    self->renderQueueBelowCapacity.wait(lk, [self]{return (self->renderQueueLength < self->renderQueueMaxLength);});
+    self->renderQueueBelowCapacity.wait_for(lk, std::chrono::milliseconds(100), [self]{return (self->renderQueueLength < self->renderQueueMaxLength);});
+    lk.unlock();
 
     Vector7d csvPose;
     csvPose << x,y,z,quat_x,quat_y,quat_z,quat_w;
 
-    // Update camera position
-    self->updateCameraPose(csvPose);
+    Vector7d flightGogglesPose = csvPose + self->poseOffset;
 
-    self->flightGoggles.state.utime = utime;
+    // Update camera position
+    self->updateCameraPose(flightGogglesPose);
+
+    self->flightGoggles->state.utime = utime;
     // request render
-    self->flightGoggles.requestRender();
+    self->flightGoggles->requestRender();
 
     // Update render queue
-    lk.lock();
     self->renderQueueLength++;
-    lk.unlock();
+
     }
   
   self->allFramesRequested = true;
@@ -128,8 +134,12 @@ void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Ca
     std::thread imageConsumerThread(imageConsumer, &worker);
 
     // Wait for threads to finish.
-    posePublisherThread.join();
-    imageConsumerThread.join();
+    while (!(worker.allFramesRequested && worker.renderQueueLength <= 0)){
+        sleep(1000);
+    }
+
+    //posePublisherThread.join();
+//    imageConsumerThread.join();
 
 }
 
@@ -218,5 +228,5 @@ int main(int argc, char **argv) {
   // // Spin
   // while (true) {sleep(1);}
 
-  return 0;
+  return 1;
 }

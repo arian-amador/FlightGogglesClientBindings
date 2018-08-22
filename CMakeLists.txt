@@ -61,6 +61,7 @@ else()
   )
 endif()
 
+# Add source folder
 add_subdirectory(src)
 
 

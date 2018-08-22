@@ -20,13 +20,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <chrono>
 
 namespace fs = std::experimental::filesystem;
 
 class OfflineRenderClient {
  public:
   // FlightGoggles interface object
-  FlightGogglesClient flightGoggles;
+  FlightGogglesClient* flightGoggles;
 
   // constructor
   OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Vector7d _poseOffset, std::string _renderDir);
