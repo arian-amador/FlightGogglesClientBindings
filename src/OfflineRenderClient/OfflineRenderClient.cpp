@@ -71,13 +71,18 @@ void imageConsumer(OfflineRenderClient& self){
       unity_incoming::RenderOutput_t renderOutput = self.flightGoggles->handleImageResponse();
       self.connected = true;
 
+      if (renderOutput.renderMetadata.utime == 0){
+        continue;
+      }
+
       // Save render result
       for (int i = 0; i < renderOutput.images.size(); i++ ){
         fs::path filename;
         filename += self.renderDir;
-        filename /= std::to_string(renderOutput.renderMetadata.utime) + std::string("_") + renderOutput.renderMetadata.cameraIDs[i] + std::string(".ppm");
+        filename /= std::to_string(renderOutput.renderMetadata.utime) + std::string("_") + renderOutput.renderMetadata.cameraIDs[i] + std::string(".png");
 
         //std::cout << "Filename" << filename << std::endl;
+        // Also compresses images on the fly.
         cv::imwrite(filename, renderOutput.images[i]);
       }
 
@@ -98,10 +103,11 @@ void posePublisher(OfflineRenderClient& self){
 
       // Keep requesting frame while not connected
       while (!self.connected){
-          self.flightGoggles->state.utime = 1;
+          self.flightGoggles->state.utime = 0;
           self.flightGoggles->requestRender(false);
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
+
 
 
     // Wait for render queue to empty before requesting more frames

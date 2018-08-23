@@ -59,7 +59,7 @@ struct StateMessage_t
   bool compressImage = false; // Deprecated. Will be removed in the future.
   
   // Frame Metadata
-  int64_t utime;
+  int64_t utime = 0;
   int camWidth = 1024;
   int camHeight = 768;
   float camFOV = 60.0f;
