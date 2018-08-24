@@ -30,12 +30,12 @@ class OfflineRenderClient {
   FlightGogglesClient* flightGoggles;
 
   // constructor
-  OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Vector7d _poseOffset, std::string _renderDir);
+  OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Transform3 _envTransform, std::string _renderDir);
 
   // PoseList CSV
   io::CSVReader<8>* csv;
 
-  Vector7d poseOffset;
+  Transform3 envTransform;
   Transform3 body_T_camera;
 
   // Directories
@@ -45,7 +45,7 @@ class OfflineRenderClient {
   std::mutex mutexForRenderQueue;
   std::condition_variable renderQueueBelowCapacity;
   int renderQueueLength = 0;
-  const int renderQueueMaxLength = 10;
+  const int renderQueueMaxLength = 30;
 
   std::atomic<bool> allFramesRequested;
   std::atomic<bool> connected;

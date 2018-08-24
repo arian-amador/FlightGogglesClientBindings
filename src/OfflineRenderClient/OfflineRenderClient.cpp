@@ -15,9 +15,9 @@
 // Constructors
 ///////////////////////
 
-OfflineRenderClient::OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Vector7d _poseOffset, std::string _renderDir){
+OfflineRenderClient::OfflineRenderClient(std::string environmentString,unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Transform3 _envTransform, std::string _renderDir){
   // Save params
-  poseOffset = _poseOffset;
+  envTransform = _envTransform;
   body_T_camera = _cameraPoseOffset;
   renderDir = _renderDir;
 
@@ -51,7 +51,7 @@ void OfflineRenderClient::updateCameraPose(Vector7d csvPose){
 
   // Get camera pose from body and body_T_camera transforms
   Transform3 cameraPose;
-  cameraPose = bodyPose * body_T_camera;
+  cameraPose = envTransform * bodyPose * body_T_camera;
 
   // Populate status message with new pose
   flightGoggles->setCameraPoseUsingNEDCoordinates(cameraPose, 0);
@@ -99,13 +99,13 @@ void posePublisher(OfflineRenderClient& self){
   int64_t utime;
   double x,y,z,quat_x,quat_y,quat_z,quat_w;
 
-  while (self.csv->read_row(utime,x,y,z,quat_x,quat_y,quat_z,quat_w)){
+  while (self.csv->read_row(utime,x,y,z,quat_w,quat_x,quat_y,quat_z)){
 
       // Keep requesting frame while not connected
       while (!self.connected){
           self.flightGoggles->state.utime = 0;
           self.flightGoggles->requestRender(false);
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
       }
 
 
@@ -118,12 +118,10 @@ void posePublisher(OfflineRenderClient& self){
     while ((self.renderQueueLength < self.renderQueueMaxLength)){
 
         Vector7d csvPose;
-        csvPose << x,y,z,quat_x,quat_y,quat_z,quat_w;
-
-        Vector7d flightGogglesPose = csvPose + self.poseOffset;
+        csvPose << x,y,z,quat_w,quat_x,quat_y,quat_z;
 
         // Update camera position
-        self.updateCameraPose(flightGogglesPose);
+        self.updateCameraPose(csvPose);
 
         self.flightGoggles->state.utime = utime;
 
@@ -141,10 +139,10 @@ void posePublisher(OfflineRenderClient& self){
 }
 
 // Master worker thread
-void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Vector7d _poseOffset, std::string _renderDir){
+void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Camera_t _renderCam, int _instanceNum, std::string _trajectoryPath, Transform3 _cameraPoseOffset, Transform3 _envTransform, std::string _renderDir){
 
     // Create client object
-    OfflineRenderClient worker(environmentString,_renderCam, _instanceNum, _trajectoryPath, _cameraPoseOffset, _poseOffset, _renderDir);
+    OfflineRenderClient worker(environmentString,_renderCam, _instanceNum, _trajectoryPath, _cameraPoseOffset, _envTransform, _renderDir);
 
     // Spawn worker threads
     // Fork sample render request thread
@@ -166,11 +164,11 @@ void OfflineRenderClientThread(std::string environmentString, unity_outgoing::Ca
 
 
 // Calculate Unity transformation
-Transform3 computeCameraBody_T_cam_(Vector7d cameraLocalOffset){
+Transform3 computeTransform(Vector7d offset){
     Transform3 body_T_cam;
     body_T_cam.fromPositionOrientationScale(
-        Vector3(cameraLocalOffset[0],cameraLocalOffset[1],cameraLocalOffset[2]),
-        Quaternionx(cameraLocalOffset[3],cameraLocalOffset[4],cameraLocalOffset[5],cameraLocalOffset[6]),
+        Vector3(offset[0],offset[1],offset[2]),
+        Quaternionx(offset[3],offset[4],offset[5],offset[6]),
         Vector3(1, 1, 1));
     return body_T_cam;
 }
@@ -183,15 +181,22 @@ Transform3 computeCameraBody_T_cam_(Vector7d cameraLocalOffset){
 int main(int argc, char **argv) {
 
   // Get args
-  if (argc != 6) {
-    std::cerr << "Please provide args! ex: ./OfflineRenderClient Butterfly_World 0.0 0.1 -0.25 poseList.csv" << std::endl;
+  if (argc != 7) {
+    std::cerr << "Please provide args! ex: ./OfflineRenderClient Butterfly_World 0.0 0.1 -0.25 <z_deg> poseList.csv" << std::endl;
     std::cerr << "Note that offset arg is in NED." << std::endl;
     return 1;
   }
   std::string environment_string = argv[1];
   Vector7d environmentPoseOffset;
-  environmentPoseOffset << std::stod(argv[2]),std::stod(argv[3]),std::stod(argv[4]),0,0,0,0;
-  std::string trajectoryPath(argv[5]);
+  Quaternionx q;
+  q = Eigen::AngleAxisd(M_PI/180.0*std::stod(argv[5]), Eigen::Vector3d::UnitZ());
+  environmentPoseOffset << std::stod(argv[2]),std::stod(argv[3]),std::stod(argv[4]),q.w(),q.x(),q.y(),q.z();
+
+  Transform3 envTransform = computeTransform(environmentPoseOffset);
+
+  //std::cout << envTransform << std::endl;
+
+  std::string trajectoryPath(argv[6]);
 
   // Specify render output path.
   std::string renderDir = "/media/medusa/NVME_Data/temp/";
@@ -224,9 +229,9 @@ int main(int argc, char **argv) {
 
   // Define pose offsets for cameras
   std::vector<Transform3> cameraPoseTransforms;
-  cameraPoseTransforms.push_back(computeCameraBody_T_cam_((Vector7d() << 0,-0.05,0,   1,0,0,0).finished()));
-  cameraPoseTransforms.push_back(computeCameraBody_T_cam_((Vector7d() << 0,0.05,0,    1,0,0,0).finished()));
-  cameraPoseTransforms.push_back(computeCameraBody_T_cam_((Vector7d() << 0,0,0,       0.707,0,-0.707,0).finished()));
+  cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,-0.05,0,   1,0,0,0).finished()));
+  cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,0.05,0,    1,0,0,0).finished()));
+  cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,0,0,       0.707,0,-0.707,0).finished()));
 
 
 
@@ -235,7 +240,7 @@ int main(int argc, char **argv) {
   workers.reserve(NUM_FG_INSTANCES);
 
   for (int i = 0; i < NUM_FG_INSTANCES; i++){
-      std::thread worker(OfflineRenderClientThread, environment_string, cameras[i], i, trajectoryPath, cameraPoseTransforms[i], environmentPoseOffset, renderDir);
+      std::thread worker(OfflineRenderClientThread, environment_string, cameras[i], i, trajectoryPath, cameraPoseTransforms[i], envTransform, renderDir);
 
       workers.push_back(std::move(worker));
 
