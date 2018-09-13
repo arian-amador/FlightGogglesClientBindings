@@ -27,9 +27,10 @@ void FlightGogglesClient::initializeConnections()
 {
     std::cout << "Initializing ZMQ connections..." << std::endl;
     // create and bind a upload_socket
-    //upload_socket.set(zmqpp::socket_option::delay_attach_on_connect, true); // Do not allow sending messages until render server connects
+    upload_socket.set(zmqpp::socket_option::send_high_water_mark, 0); // Do not allow for ZMQ to drop messages
     upload_socket.bind(client_address + ":" + std::to_string(upload_port));
     // create and bind a download_socket
+	download_socket.set(zmqpp::socket_option::receive_high_water_mark, 0); // Do not allow ZMQ to drop messages
     download_socket.bind(client_address + ":" + std::to_string(download_port));
     download_socket.subscribe("");
     std::cout << "Done!" << std::endl;
@@ -145,8 +146,8 @@ bool FlightGogglesClient::requestRender(bool throttleRequest)
         // reset time of last debug message
         last_upload_debug_utime = state.utime;
     }
-    // Send message without blocking.
-    upload_socket.send(msg, true);
+    // Send message without blocking (if throttled request).
+    upload_socket.send(msg, throttleRequest);
     return true;
 }
 

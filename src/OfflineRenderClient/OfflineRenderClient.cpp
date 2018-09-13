@@ -81,9 +81,11 @@ void imageConsumer(OfflineRenderClient& self){
         filename += self.renderDir;
         filename /= std::to_string(renderOutput.renderMetadata.utime) + std::string("_") + renderOutput.renderMetadata.cameraIDs[i] + std::string(".png");
 
-        //std::cout << "Filename" << filename << std::endl;
-        // Also compresses images on the fly.
-        cv::imwrite(filename, renderOutput.images[i]);
+		// If image file does not exist, write it to disk.
+        // Compresses images on the fly if needed.
+        if (!fs::exists(filename)){
+        	cv::imwrite(filename, renderOutput.images[i]);
+        }
       }
 
       // Update number of outstanding render requests.
@@ -130,7 +132,7 @@ void posePublisher(OfflineRenderClient& self){
 
         // Update render queue
         self.renderQueueLength++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     lk.unlock();
   }
@@ -220,18 +222,28 @@ int main(int argc, char **argv) {
   camD.isDepth = false;
   camD.outputIndex = 0;
 
+  unity_outgoing::Camera_t camDepth;
+  camDepth.ID = "Camera_Depth";
+  camDepth.channels = 1;
+  camDepth.isDepth = true;
+  camDepth.outputIndex = 0;
+
   std::vector<unity_outgoing::Camera_t> cameras;
 
   // Save cameras
   cameras.push_back(camL);
   cameras.push_back(camR);
   cameras.push_back(camD);
+  cameras.push_back(camDepth);
 
   // Define pose offsets for cameras
   std::vector<Transform3> cameraPoseTransforms;
   cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,-0.05,0,   1,0,0,0).finished()));
   cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,0.05,0,    1,0,0,0).finished()));
   cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,0,0,       0.707,0,-0.707,0).finished()));
+   // Depth cam is same as left cam
+  cameraPoseTransforms.push_back(computeTransform((Vector7d() << 0,-0.05,0,   1,0,0,0).finished()));
+
 
 
 

@@ -63,7 +63,7 @@ struct StateMessage_t
   int camWidth = 1024;
   int camHeight = 768;
   float camFOV = 60.0f;
-  double camDepthScale = 0.20; // 0.xx corresponds to xx cm resolution
+  double camDepthScale = 0.10; // 0.xx corresponds to xx cm resolution
   bool forceFrameRender = true;
 
   // CTAA AntiAliasing Settings
