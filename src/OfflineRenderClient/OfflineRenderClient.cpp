@@ -1,15 +1,11 @@
 /**
  * @file   OfflineRenderClient.cpp
  * @author Winter Guerra
- * @brief  Pulls images from Unity and saves them as PNGs
+ * @brief  Pulls images from Unity and saves them as PNGs. Assumes that at least num_cameras FlightGoggles instances are running.
  *space.
  **/
 
 #include "OfflineRenderClient.hpp"
-
-// 2 remote instances, 1 local instance.
-#define NUM_FG_INSTANCES 3
-
 
 ///////////////////////
 // Constructors
@@ -183,22 +179,25 @@ Transform3 computeTransform(Vector7d offset){
 int main(int argc, char **argv) {
 
   // Get args
-  if (argc != 7) {
-    std::cerr << "Please provide args! ex: ./OfflineRenderClient Butterfly_World 0.0 0.1 -0.25 <z_deg> poseList.csv" << std::endl;
+  if (argc != 8) {
+    std::cerr << "Please provide args! ex: ./OfflineRenderClient Butterfly_World <num_cameras> <offset_x> <offset_y> <offset_z> <offset_z_deg> poseList.csv" << std::endl;
     std::cerr << "Note that offset arg is in NED." << std::endl;
     return 1;
   }
   std::string environment_string = argv[1];
+  const int num_cameras = std::stoi(argv[2]);
   Vector7d environmentPoseOffset;
   Quaternionx q;
-  q = Eigen::AngleAxisd(M_PI/180.0*std::stod(argv[5]), Eigen::Vector3d::UnitZ());
-  environmentPoseOffset << std::stod(argv[2]),std::stod(argv[3]),std::stod(argv[4]),q.w(),q.x(),q.y(),q.z();
+  q = Eigen::AngleAxisd(M_PI/180.0*std::stod(argv[6]), Eigen::Vector3d::UnitZ());
+  environmentPoseOffset << std::stod(argv[3]),std::stod(argv[4]),std::stod(argv[5]),q.w(),q.x(),q.y(),q.z();
+
+  std::cout << environmentPoseOffset << std::endl;
 
   Transform3 envTransform = computeTransform(environmentPoseOffset);
 
   //std::cout << envTransform << std::endl;
 
-  std::string trajectoryPath(argv[6]);
+  std::string trajectoryPath(argv[7]);
 
   // Specify render output path.
   std::string renderDir = "/media/medusa/NVME_Data/temp/";
@@ -249,9 +248,9 @@ int main(int argc, char **argv) {
 
   // spawn parallel render clients for each camera
   std::vector<std::thread> workers;
-  workers.reserve(NUM_FG_INSTANCES);
+  workers.reserve(num_cameras);
 
-  for (int i = 0; i < NUM_FG_INSTANCES; i++){
+  for (int i = 0; i < num_cameras; i++){
       std::thread worker(OfflineRenderClientThread, environment_string, cameras[i], i, trajectoryPath, cameraPoseTransforms[i], envTransform, renderDir);
 
       workers.push_back(std::move(worker));
