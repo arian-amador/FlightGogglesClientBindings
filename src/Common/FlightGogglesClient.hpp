@@ -9,6 +9,7 @@
 
 #include <fstream>
 #include <chrono>
+#include <unistd.h>
 
 // Include ZMQ bindings for comms with Unity.
 #include <iostream>
@@ -45,10 +46,10 @@ class FlightGogglesClient
     // Socket variables
     zmqpp::context context;
     zmqpp::socket upload_socket {
-        context, 
+        context,
         zmqpp::socket_type::publish};
     zmqpp::socket download_socket {
-        context, 
+        context,
         zmqpp::socket_type::subscribe};
 
     // Temporary buffer for reshaping and casting of received images
@@ -72,7 +73,7 @@ class FlightGogglesClient
     // Connects to FlightGoggles.
     void initializeConnections();
 
-    
+
     //////////////////////////////////
     // FLIGHTGOGGLES OUTPUT FUNCTIONS
     //////////////////////////////////
@@ -98,7 +99,7 @@ class FlightGogglesClient
         }
     };
 
-    // Blocking call. Returns rendered images and render metadata whenever 
+    // Blocking call. Returns rendered images and render metadata whenever
     // it becomes available.
     unity_incoming::RenderOutput_t handleImageResponse();
 
